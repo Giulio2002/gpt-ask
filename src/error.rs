@@ -4,6 +4,7 @@ use std::fmt::Display;
 pub enum Error {
     RequestError(reqwest::Error),
     JsonError(serde_json::Error),
+    NoChoicesError,
 }
 
 impl Display for Error {
@@ -13,6 +14,7 @@ impl Display for Error {
                 write!(f, "{}", err),
             Error::JsonError(err) => 
                 write!(f, "{}", err),
+            Error::NoChoicesError => write!(f, "no choices received"),
         }
     }
 }

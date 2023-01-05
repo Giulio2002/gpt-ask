@@ -46,20 +46,27 @@ impl OpenAIClient {
         let endpoint = format!("{}/completions", self.api_url);
 
         // Send the request and store the response
-        let res = client
+        let res = match client
             .post(endpoint)
             .json(&request)
             .bearer_auth(&self.api_key)
             .send()
-            .await?;
+            .await?
+            .error_for_status() {
+                Ok(res) => res,
+                Err(e) => return Err(Error::RequestError(e))
+        };
 
         // Get the response body as a string
         let text = res.text().await?;
 
         // Deserialize the response JSON
         let response: CompletionResponse = serde_json::from_str(&text)?;
-
-        // Return the text of the first choice in the response
-        Ok(response.choices[0].text.to_owned())
+        if let Some(first_choice) = response.choices.get(0) {
+            // Return the text of the first choice in the response
+            return Ok(first_choice.text.to_owned());
+        };
+        // No choices found? return an error.
+        Err(Error::NoChoicesError)
     }
 }
