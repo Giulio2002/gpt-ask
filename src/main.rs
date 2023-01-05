@@ -3,6 +3,7 @@ extern crate serde_derive;
 
 mod error;
 mod env;
+mod communication;
 mod gpt;
 
 use std::process::exit;
@@ -19,10 +20,9 @@ async fn main() {
     };
     let chat_gpt = gpt::OpenAIClient::new(
         api_key, 
-        gpt::ApiUrlDefault.to_string(),
-        5000,
-        0.5,
-        1
+        gpt::API_URL_DEFAULT.to_string(),
+        gpt::MAX_TOKENS,
+        gpt::DA_VINCI_MODEL.to_string(),
     );
     let answer = match chat_gpt.ask("when is christmas?".to_string()).await {
         Ok(out) => out,
