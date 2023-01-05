@@ -56,6 +56,17 @@ enum Cli {
         #[structopt(short, long)]
         out: Option<String>,
     },
+
+    #[structopt(name = "feedback")]
+    Feedback {
+        /// Show the help manual
+        #[structopt(short, long)]
+        help: bool,
+
+        /// Show the list of commands
+        #[structopt(short, long)]
+        file: String,
+    },
 }
 
 #[tokio::main]
@@ -132,7 +143,23 @@ async fn main() {
                 exit(0);
             }
             println!("{}", answer);
-        }
+        },
+        Cli::Feedback { help, file } => {
+            if help {
+                println!("Usage: --file=\"INPUT_FILE\"");
+                exit(0);
+            }
+            let code = read_file(file);
+
+            let answer = match chat_gpt.ask(format!("can you rate the following code on a scale from 1 to 10 and give some reasoning and suggestions: \n\n {}", code)).await {
+                Ok(out) => out,
+                Err(err) => {
+                    println!("could not query openai: {}", err.to_string());
+                    exit(0);
+                }
+            };
+            println!("{}", answer);
+        },
     }
 }
 
