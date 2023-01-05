@@ -14,7 +14,7 @@ pub const API_URL_DEFAULT: &str = "https://api.openai.com/v1";
 pub const DA_VINCI_MODEL: &str = "text-davinci-003";
 
 // Maximum number of tokens that the API should return in its response
-pub const MAX_TOKENS: usize = 4000;
+pub const MAX_TOKENS: usize = 2000;
 
 // Struct for holding client configuration and state
 pub struct OpenAIClient {

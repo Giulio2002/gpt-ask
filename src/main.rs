@@ -10,7 +10,7 @@ use std::{process::exit, fs::File,
     io::{
         Read,
         Write
-    }
+    }, path::Path
 };
 
 use structopt::StructOpt;
@@ -31,6 +31,20 @@ enum Cli {
 
     #[structopt(name = "refactor")]
     Refactor {
+        /// Show the help manual
+        #[structopt(short, long)]
+        help: bool,
+
+        /// Show the list of commands
+        #[structopt(short, long)]
+        file: String,
+        /// Show the list of commands
+        #[structopt(short, long)]
+        out: Option<String>,
+    },
+
+    #[structopt(name = "document")]
+    Document {
         /// Show the help manual
         #[structopt(short, long)]
         help: bool,
@@ -81,12 +95,32 @@ async fn main() {
         },
         Cli::Refactor { help, file, out } => {
             if help || file == "" {
-                println!("Usage: --question=\"YOUR_QUESTION\"");
+                println!("Usage: --file=\"INPUT_FILE\", --out=\"OUTPUT_FILE\"");
                 exit(0);
             }
             let code = read_file(file);
 
-            let answer = match chat_gpt.ask(format!("refactor the following code \n\n: {}", code)).await {
+            let answer = match chat_gpt.ask(format!("refactor the following code: \n\n {}", code)).await {
+                Ok(out) => out,
+                Err(err) => {
+                    println!("could not query openai: {}", err.to_string());
+                    exit(0);
+                }
+            };
+            if let Some(outfile) = out {
+                write_file(outfile, answer);
+                exit(0);
+            }
+            println!("{}", answer);
+        }
+        Cli::Document { help, file, out } => {
+            if help || file == "" {
+                println!("Usage: --file=\"INPUT_FILE\", --out=\"OUTPUT_FILE\"");
+                exit(0);
+            }
+            let code = read_file(file);
+
+            let answer = match chat_gpt.ask(format!("rewrite the whole following code with comments, do not change any functionality: \n\n {}", code)).await {
                 Ok(out) => out,
                 Err(err) => {
                     println!("could not query openai: {}", err.to_string());
@@ -110,6 +144,9 @@ fn read_file(file: String) -> String {
 }
 
 fn write_file(file: String, content: String) {
+    if Path::new(&file).exists() {
+        panic!("${} already exist", file)
+    }
     let mut f = File::create(file)
         .expect("Error encountered while creating file!");
     f.write_all(content.as_bytes()).expect("Error while writing output to file");
