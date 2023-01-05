@@ -6,7 +6,12 @@ mod env;
 mod communication;
 mod gpt;
 
-use std::process::exit;
+use std::{process::exit, fs::File, 
+    io::{
+        Read,
+        Write
+    }
+};
 
 use structopt::StructOpt;
 
@@ -33,6 +38,9 @@ enum Cli {
         /// Show the list of commands
         #[structopt(short, long)]
         file: String,
+        /// Show the list of commands
+        #[structopt(short, long)]
+        out: Option<String>,
     },
 }
 
@@ -71,8 +79,38 @@ async fn main() {
             };
             println!("{}", answer);
         },
-        Cli::Refactor { help, file } => {
-            unimplemented!()
+        Cli::Refactor { help, file, out } => {
+            if help || file == "" {
+                println!("Usage: --question=\"YOUR_QUESTION\"");
+                exit(0);
+            }
+            let code = read_file(file);
+
+            let answer = match chat_gpt.ask(format!("refactor the following code \n\n: {}", code)).await {
+                Ok(out) => out,
+                Err(err) => {
+                    println!("could not query openai: {}", err.to_string());
+                    exit(0);
+                }
+            };
+            if let Some(outfile) = out {
+                write_file(outfile, answer);
+                exit(0);
+            }
+            println!("{}", answer);
         }
     }
+}
+
+fn read_file(file: String) -> String {
+    let mut file = File::open(file).expect("Unable to open the file");
+    let mut contents = String::new();
+    file.read_to_string(&mut contents).expect("Unable to read the file");
+    contents
+}
+
+fn write_file(file: String, content: String) {
+    let mut f = File::create(file)
+        .expect("Error encountered while creating file!");
+    f.write_all(content.as_bytes()).expect("Error while writing output to file");
 }
