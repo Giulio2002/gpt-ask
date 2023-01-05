@@ -1,6 +1,6 @@
-# Gpt-Ask
+# GPT-Ask
 
-Ask-GPT is a CLI tool written in Rust that queries that chat gpt AI in order to either ask question/refactor/document your code without going to the browser.
+GPT-Ask is a CLI tool written in Rust that queries that chat gpt AI in order to either ask question/refactor/document your code without going to the browser.
 
 ## Commands
 
